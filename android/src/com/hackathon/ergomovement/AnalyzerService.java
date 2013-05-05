@@ -1,7 +1,13 @@
 package com.hackathon.ergomovement;
 
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import org.apache.http.HttpResponse;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Service;
 import android.hardware.Sensor;
@@ -15,6 +21,10 @@ public class AnalyzerService extends AbstractService {
     private static final String TAG = Service.class.getSimpleName();
     private Timer timer = new Timer();
 
+    public static int goodSeconds = 0;
+    public static int badSeconds = 0;
+    public static int jumpingSeconds = 0;
+
     public static int modeId = 1; //0 - hardcore, 1- medium, 2 - lazy
 
     public static AnalyzerService App;
@@ -27,6 +37,9 @@ public class AnalyzerService extends AbstractService {
         MyTask t = new MyTask();
         // Increment counter and send to activity every 1000ms
         timer.scheduleAtFixedRate(t, 0, 1000);
+        Timer postTimer = new Timer();
+        PostTask postTask = new PostTask();
+        postTimer.scheduleAtFixedRate(postTask, 20*1000, 20*1000);
     }
 
     public void pushMessage(int code) {
@@ -66,6 +79,30 @@ public class AnalyzerService extends AbstractService {
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(sa, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+}
+
+class PostTask extends TimerTask {
+    @Override
+    public void run() {
+        String param = "[{" +
+        "\"GoodSeconds\": \""+ Integer.toString(AnalyzerService.goodSeconds) + "\"," +
+    "\"BadSeconds\": " + Integer.toString(AnalyzerService.badSeconds) + "," +
+    "\"JumpingSeconds\": " + Integer.toString(AnalyzerService.jumpingSeconds) + "," +
+    "\"Date\": " + Long.toString(new Date().getTime()) + "," +
+    "\"UserId\": \"5\"}]";
+
+
+        HttpResponse response = NetUtils.postSeconds(param);
+        if (response.getStatusLine().getStatusCode() == 200) {
+            AnalyzerService.goodSeconds = 0;
+            AnalyzerService.badSeconds = 0;
+            AnalyzerService.jumpingSeconds = 0;
+            Log.d("TEST POST", "Post sucessful");
+        } else {
+            Log.d("TEST POST", "Post failed");
+        }
+
     }
 }
 
@@ -142,9 +179,12 @@ class Magic {
         Log.d("TEST", Integer.toString(AnalyzerService.modeId));
         if (amplitude.Sum() > getAValue(AnalyzerService.modeId)) {
             AnalyzerService.App.pushMessage(STATUS_JUMPING);
+            AnalyzerService.jumpingSeconds = AnalyzerService.jumpingSeconds + 1;
         } else if (mean.X < getXValue(AnalyzerService.modeId) || mean.Z < getZValue(AnalyzerService.modeId)) {
             AnalyzerService.App.pushMessage(STATUS_FUCKEDUP);
+            AnalyzerService.badSeconds = AnalyzerService.badSeconds + 1;
         } else {
+            AnalyzerService.goodSeconds = AnalyzerService.goodSeconds + 1;
             AnalyzerService.App.pushMessage(STATUS_SITTING);
         }
     }

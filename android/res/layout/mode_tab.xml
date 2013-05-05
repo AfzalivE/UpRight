@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:checked="true"
             android:paddingBottom="14dp"
-            android:paddingLeft="16dp"
+            android:paddingLeft="24dp"
             android:paddingTop="14dp"
             android:text="Hardcore" />
 
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:checked="true"
             android:paddingBottom="14dp"
-            android:paddingLeft="16dp"
+            android:paddingLeft="24dp"
             android:paddingTop="14dp"
             android:text="Working" />
 
@@ -49,7 +49,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="14dp"
-            android:paddingLeft="16dp"
+            android:paddingLeft="24dp"
             android:paddingTop="14dp"
             android:text="Lazy" />
     </RadioGroup>

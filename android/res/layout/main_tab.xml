@@ -4,21 +4,40 @@
     android:layout_height="match_parent" >
 
     <TextView
-        android:id="@+id/status"
+        android:id="@+id/statustext"
+        style="@android:style/TextAppearance.Large"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="62dp"
+        android:fontFamily="sans-serif"
         android:gravity="center"
-        android:text="Status: Off" />
+        android:text="Status" />
+
+    <TextView
+        android:id="@+id/status"
+        style="@android:style/TextAppearance.Large"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/statustext"
+        android:layout_marginTop="46dp"
+        android:fontFamily="sans-serif-light"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="Off" />
 
     <Switch
         android:id="@+id/switch1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/status"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
+        android:layout_marginTop="91dp"
         android:scaleX="3"
-        android:scaleY="3" />
+        android:scaleY="3"
+        android:thumb="@drawable/switch_inner_holo_light"
+        android:track="@drawable/switch_track_holo_light" />
 
 </RelativeLayout>

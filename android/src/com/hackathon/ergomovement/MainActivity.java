@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Timer;
 
-import android.R.anim;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.AlertDialog;
@@ -21,7 +20,6 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.text.AndroidCharacter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -98,7 +96,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                         lastTimerTimestamp = new Date();
                     }
                 }
-                mStatus.setText("Status: " + status + " for " + Long.toString(timePassed / 1000) + " seconds");
+                mStatus.setText(status + " for " + Long.toString(timePassed / 1000) + " seconds");
             }
 
         }
@@ -262,6 +260,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.main_tab, container, false);
             Switch work = (Switch) rootView.findViewById(R.id.switch1);
+
+
             mStatus = (TextView) rootView.findViewById(R.id.status);
 
             work.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -277,7 +277,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                         Intent service = new Intent(buttonView.getContext(), AnalyzerService.class);
                         //                        buttonView.getContext().stopService(service);
                         //                        ((MainActivity) getActivity()).stopServiceManager();
-                        mStatus.setText("Status: Off");
+                        mStatus.setText("Off");
                         ((MainActivity) getActivity()).isOn = false;
                     }
                     Log.d("TEST", Boolean.toString(isChecked));

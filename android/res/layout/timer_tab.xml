@@ -13,7 +13,9 @@
         android:layout_marginLeft="30dp"
         android:layout_marginRight="30dp"
         android:layout_marginTop="24dp"
-        android:text="Timer" />
+        android:text="Timer"
+        android:thumb="@drawable/switch_inner_holo_light"
+        android:track="@drawable/switch_track_holo_light" />
 
     <RelativeLayout
         android:id="@+id/seekstuff"
@@ -40,7 +42,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_below="@+id/timertext"
-            android:layout_marginBottom="48dp"
+            android:layout_marginBottom="36dp"
             android:progress="15" />
 
 
