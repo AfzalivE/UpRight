@@ -1,14 +1,21 @@
 package com.hackathon.ergomovement;
 
+import java.util.Date;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
+import android.app.AlertDialog;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteException;
+import android.os.Vibrator;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -24,6 +31,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -31,38 +39,53 @@ import android.widget.TextView;
 public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private Date lastTime = new Date();
+    private Date timeSincelastChange = new Date();
+    public int secondsVibrationInterval = 10;
+    public static int modeId = 1;
+    public static Vibrator mVibrator;
 
     SectionsPagerAdapter mSectionsPagerAdapter;
 
     ViewPager mViewPager;
 
+    private boolean isOn = false;
     private ServiceManager mService;
     private static TextView mStatus;
 
     private Handler mResponseHandler = new Handler() {
         @Override
-        public void handleMessage (Message msg) {
-            Log.d(TAG, "Handling messages");
-
-            switch (msg.what) {
-                case Magic.STATUS_SITTING:
-                    mStatus.setText("SITTING");
-                    Log.d(TAG, "SITTING");
-                    break;
-                case Magic.STATUS_FUCKEDUP:
-                    mStatus.setText("FUCKEDUP");
-                    Log.d(TAG, "FUCKEDUP");
-                    break;
-                case Magic.STATUS_JUMPING:
-                    mStatus.setText("JUMPING");
-                    Log.d(TAG, "JUMPING");
-                    break;
-                default:
-                    break;
+        public void handleMessage(Message msg) {
+            if (initialized && isOn) {
+                Log.d(TAG, "Handling messages");
+                switch (msg.what) {
+                    case Magic.STATUS_SITTING:
+                        mStatus.setText("SITTING");
+                        Log.d(TAG, "SITTING");
+                        break;
+                    case Magic.STATUS_FUCKEDUP:
+                        mStatus.setText("FUCKEDUP");
+                        vibrate();
+                        Log.d(TAG, "FUCKEDUP");
+                        break;
+                    case Magic.STATUS_JUMPING:
+                        mStatus.setText("JUMPING");
+                        Log.d(TAG, "JUMPING");
+                        break;
+                    default:
+                        break;
+                }
             }
 
         }
     };
+
+    private void vibrate() {
+        if (new Date().getTime() > lastTime.getTime() + secondsVibrationInterval * 1000) {
+            lastTime = new Date();
+            mVibrator.vibrate(1000);
+        }
+    }
 
     public void startServiceManager() {
         mService.start();
@@ -110,7 +133,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         });
 
         mService = new ServiceManager(this, AnalyzerService.class, mResponseHandler);
-//        startServiceManager();
+        mService.start();
+        //        startServiceManager();
+        mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         // For each of the sections in the app, add a tab to the action bar.
         for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
@@ -135,7 +160,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         // the ViewPager.
         mViewPager.setCurrentItem(tab.getPosition());
     }
-
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -197,13 +221,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
      * A dummy fragment representing a section of the app, but that simply
      * displays dummy text.
      */
+
+    private static Boolean initialized = false;
+
     public static class MainFragment extends Fragment {
         /**
          * The fragment argument representing the section number for this
          * fragment.
          */
-        public static final String ARG_SECTION_NUMBER = "section_number";
-
         public MainFragment() {
         }
 
@@ -219,17 +244,21 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     if (isChecked) {
                         Intent service = new Intent(buttonView.getContext(), AnalyzerService.class);
-//                        buttonView.getContext().startService(service);
-                        ((MainActivity) getActivity()).startServiceManager();
+                        //                        buttonView.getContext().startService(service);
+                        //                        ((MainActivity) getActivity()).startServiceManager();
+                        ((MainActivity) getActivity()).isOn = true;
                     } else {
                         Intent service = new Intent(buttonView.getContext(), AnalyzerService.class);
-//                        buttonView.getContext().stopService(service);
-                        ((MainActivity) getActivity()).stopServiceManager();
+                        //                        buttonView.getContext().stopService(service);
+                        //                        ((MainActivity) getActivity()).stopServiceManager();
+                        ((MainActivity) getActivity()).isOn = false;
                     }
                     Log.d("TEST", Boolean.toString(isChecked));
 
                 }
             });
+
+            initialized = true;
             return rootView;
         }
     }
@@ -243,8 +272,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
          * The fragment argument representing the section number for this
          * fragment.
          */
-        public static final String ARG_SECTION_NUMBER = "section_number";
-
         public TimerFragment() {
         }
 
@@ -259,11 +286,34 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                 public void onClick(View v) {
                     if (remindMe.isChecked()) {
                         interval.setVisibility(View.VISIBLE);
+                        startTimer(interval.getSelectedItemId());
                     } else {
                         interval.setVisibility(View.GONE);
                     }
                 }
+
+                private void startTimer(long selectedItemId) {
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
+
+                        @Override
+                        public void run() {
+                            ((MainActivity) getActivity()).mVibrator.vibrate(2000);
+                            ((MainActivity) getActivity()).runOnUiThread(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getActivity());
+                                    alertBuilder.setMessage("Get your ass off that chair!").setTitle("Inactivity alert");
+                                    alertBuilder.create().show();
+                                }
+                            });
+                        }
+                    }, (15 + selectedItemId * 15) * 1000);
+                    //                    }, (15 + selectedItemId * 15) * 1000 * 60);
+                }
             });
+
             return rootView;
         }
     }
@@ -277,8 +327,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
          * The fragment argument representing the section number for this
          * fragment.
          */
-        public static final String ARG_SECTION_NUMBER = "section_number";
-
         public ModeFragment() {
         }
 
@@ -288,6 +336,30 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
             SeekBar mode = (SeekBar) rootView.findViewById(R.id.seekBar1);
             mode.setMax(2);
             mode.incrementProgressBy(1);
+
+            mode.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    MainActivity.modeId = progress;
+                    try {
+                        ((MainActivity) getActivity()).mService.send(Message.obtain(null, MainActivity.modeId));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, Integer.toString(progress));
+                }
+            });
 
             return rootView;
         }

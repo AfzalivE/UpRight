@@ -13,10 +13,9 @@ import android.util.Log;
 
 public class AnalyzerService extends AbstractService {
     private static final String TAG = Service.class.getSimpleName();
-    private static final int MSG_COUNTER = 2;
     private Timer timer = new Timer();
-    private int counter = 0;
-    private final int incrementby = 1;
+
+    public static int modeId = 1; //0 - hardcore, 1- medium, 2 - lazy
 
     public static AnalyzerService App;
 
@@ -25,16 +24,13 @@ public class AnalyzerService extends AbstractService {
         App = this;
         Log.d(TAG, "Service started");
         setupSensor();
-        Timer timer = new Timer("Printer");
         MyTask t = new MyTask();
         // Increment counter and send to activity every 1000ms
         timer.scheduleAtFixedRate(t, 0, 1000);
-
-
     }
 
     public void pushMessage(int code) {
-        send(Message.obtain(null, code, null));
+        send(Message.obtain(null, code));
     }
 
     @Override
@@ -45,7 +41,20 @@ public class AnalyzerService extends AbstractService {
 
     @Override
     public void onReceiveMessage(Message msg) {
-        // TODO Auto-generated method stub
+        Log.d(TAG, "Receiving messages from activity");
+        switch (msg.what) {
+            case 0:
+                modeId = 0;
+                break;
+            case 1:
+                modeId = 1;
+                break;
+            case 2:
+                modeId = 2;
+                break;
+            default:
+                break;
+        }
     }
 
     private static SensorManager mSensorManager;
@@ -117,19 +126,53 @@ class Magic {
     static final int STATUS_JUMPING = 1;
     static final int STATUS_FUCKEDUP = 2;
 
+    double magic_value_x_HC = 8;
+    double magic_value_z_HC = 3.5;
+    double magic_value_amp_HC = 4;
+
+    double magic_value_x_LZ = 8;
+    double magic_value_z_LZ = 3.5;
+    double magic_value_amp_LZ = 4;
+
     double magic_value_x = 8;
-    double magic_value_y; //dont' use this
     double magic_value_z = 3.5;
     double magic_value_amp = 4;
 
     public void setStats(XYZ mean, XYZ amplitude) {
-        if (amplitude.Sum() > magic_value_amp) {
+        if (amplitude.Sum() > getAValue(AnalyzerService.modeId)) {
             AnalyzerService.App.pushMessage(STATUS_JUMPING);
-        } else if (mean.X < magic_value_x || mean.Z < magic_value_z) {
+        } else if (mean.X < getXValue(AnalyzerService.modeId) || mean.Z < getZValue(AnalyzerService.modeId)) {
             AnalyzerService.App.pushMessage(STATUS_FUCKEDUP);
         } else {
             AnalyzerService.App.pushMessage(STATUS_SITTING);
         }
+    }
+
+    private double getXValue(int mode) {
+        if(mode == 0)
+            return magic_value_x_HC;
+        else if(mode == 1)
+            return magic_value_x;
+        else
+            return magic_value_x_LZ;
+    }
+
+    private double getZValue(int mode) {
+        if(mode == 0)
+            return magic_value_z_HC;
+        else if(mode == 1)
+            return magic_value_z;
+        else
+            return magic_value_z_LZ;
+    }
+
+    private double getAValue(int mode) {
+        if(mode == 0)
+            return magic_value_amp_HC;
+        else if(mode == 1)
+            return magic_value_amp;
+        else
+            return magic_value_amp_LZ;
     }
 }
 
