@@ -136,9 +136,10 @@ class Magic {
 
     double magic_value_x = 8;
     double magic_value_z = 3.5;
-    double magic_value_amp = 4;
+    double magic_value_amp = 10;
 
     public void setStats(XYZ mean, XYZ amplitude) {
+        Log.d("TEST", Integer.toString(AnalyzerService.modeId));
         if (amplitude.Sum() > getAValue(AnalyzerService.modeId)) {
             AnalyzerService.App.pushMessage(STATUS_JUMPING);
         } else if (mean.X < getXValue(AnalyzerService.modeId) || mean.Z < getZValue(AnalyzerService.modeId)) {

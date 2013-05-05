@@ -3,8 +3,8 @@ package com.hackathon.ergomovement;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Timer;
-import java.util.TimerTask;
 
+import android.R.anim;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.AlertDialog;
@@ -21,18 +21,19 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.AndroidCharacter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -52,29 +53,52 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
     private boolean isOn = false;
     private ServiceManager mService;
     private static TextView mStatus;
+    private Date lastTimerTimestamp = new Date();
 
     private Handler mResponseHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             if (initialized && isOn) {
+                String status = new String();
                 Log.d(TAG, "Handling messages");
                 switch (msg.what) {
                     case Magic.STATUS_SITTING:
-                        mStatus.setText("SITTING");
+                        if (!mStatus.getText().toString().contains("Good Posture")) {
+                            timeSincelastChange = new Date();
+                        }
+                        status = "Good Posture";
                         Log.d(TAG, "SITTING");
                         break;
                     case Magic.STATUS_FUCKEDUP:
-                        mStatus.setText("FUCKEDUP");
+                        if (!mStatus.getText().toString().contains("Bad Posture")) {
+                            timeSincelastChange = new Date();
+                        }
+                        status = "Bad Posture";
                         vibrate();
                         Log.d(TAG, "FUCKEDUP");
                         break;
                     case Magic.STATUS_JUMPING:
-                        mStatus.setText("JUMPING");
+                        if (!mStatus.getText().toString().contains("Moving")) {
+                            timeSincelastChange = new Date();
+                        }
+                        status = "Moving";
                         Log.d(TAG, "JUMPING");
                         break;
                     default:
                         break;
                 }
+
+                long timePassed = (new Date().getTime() - timeSincelastChange.getTime());
+                if (TimerFragment.timerInterval != 0 && status.equals("Good Posture") && timePassed > TimerFragment.timerInterval) {
+                    if (lastTimerTimestamp.getTime() + TimerFragment.timerInterval < new Date().getTime()) {
+                        mVibrator.vibrate(2000);
+                        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(MainActivity.this);
+                        alertBuilder.setMessage(TimerFragment.timerInterval / 1000 + " seconds are up. Take a break!").setTitle("Inactivity alert").setPositiveButton("Okay", null);
+                        alertBuilder.create().show();
+                        lastTimerTimestamp = new Date();
+                    }
+                }
+                mStatus.setText("Status: " + status + " for " + Long.toString(timePassed / 1000) + " seconds");
             }
 
         }
@@ -143,7 +167,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
             // the adapter. Also specify this Activity object, which implements
             // the TabListener interface, as the callback (listener) for when
             // this tab is selected.
-            actionBar.addTab(actionBar.newTab().setText(mSectionsPagerAdapter.getPageTitle(i)).setTabListener(this));
+            if (i == 0) actionBar.addTab(actionBar.newTab().setTabListener(this).setIcon(R.drawable.ic_menu_home));
+            else if (i == 1) actionBar.addTab(actionBar.newTab().setTabListener(this).setIcon(android.R.drawable.ic_menu_recent_history));
+            else if (i == 2) actionBar.addTab(actionBar.newTab().setTabListener(this).setIcon(android.R.drawable.ic_menu_always_landscape_portrait));
         }
     }
 
@@ -251,6 +277,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                         Intent service = new Intent(buttonView.getContext(), AnalyzerService.class);
                         //                        buttonView.getContext().stopService(service);
                         //                        ((MainActivity) getActivity()).stopServiceManager();
+                        mStatus.setText("Status: Off");
                         ((MainActivity) getActivity()).isOn = false;
                     }
                     Log.d("TEST", Boolean.toString(isChecked));
@@ -275,42 +302,51 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         public TimerFragment() {
         }
 
+        public static long timerInterval = 0;
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.timer_tab, container, false);
-            final CheckBox remindMe = (CheckBox) rootView.findViewById(R.id.checkBox1);
-            final Spinner interval = (Spinner) rootView.findViewById(R.id.spinner1);
-            remindMe.setOnClickListener(new OnClickListener() {
+            final Switch remindMe = (Switch) rootView.findViewById(R.id.switch1);
+            final SeekBar interval = (SeekBar) rootView.findViewById(R.id.seekBar1);
+            final RelativeLayout seekStuff = (RelativeLayout) rootView.findViewById(R.id.seekstuff);
+            final TextView timerText = (TextView) rootView.findViewById(R.id.timertext);
+            interval.setMax(90);
+            interval.incrementProgressBy(1);
+            final Timer timer = new Timer();
+
+            remindMe.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
                 @Override
-                public void onClick(View v) {
+                public void onCheckedChanged(CompoundButton buttonView, boolean isCheacked) {
                     if (remindMe.isChecked()) {
-                        interval.setVisibility(View.VISIBLE);
-                        startTimer(interval.getSelectedItemId());
+                        seekStuff.setVisibility(View.VISIBLE);
+                        Log.d(TAG, Integer.toString(interval.getProgress()));
+                        timerInterval = interval.getProgress() * 1000;
                     } else {
-                        interval.setVisibility(View.GONE);
+                        timerInterval = 0;
+                        seekStuff.setVisibility(View.GONE);
                     }
                 }
 
-                private void startTimer(long selectedItemId) {
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
+            });
 
-                        @Override
-                        public void run() {
-                            ((MainActivity) getActivity()).mVibrator.vibrate(2000);
-                            ((MainActivity) getActivity()).runOnUiThread(new Runnable() {
+            interval.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
-                                @Override
-                                public void run() {
-                                    AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getActivity());
-                                    alertBuilder.setMessage("Get your ass off that chair!").setTitle("Inactivity alert");
-                                    alertBuilder.create().show();
-                                }
-                            });
-                        }
-                    }, (15 + selectedItemId * 15) * 1000);
-                    //                    }, (15 + selectedItemId * 15) * 1000 * 60);
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                    timer.cancel();
+                }
+
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    timerText.setText(Integer.toString(progress));
+                    timerInterval = interval.getProgress() * 1000;
                 }
             });
 
@@ -333,31 +369,26 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.mode_tab, container, false);
-            SeekBar mode = (SeekBar) rootView.findViewById(R.id.seekBar1);
-            mode.setMax(2);
-            mode.incrementProgressBy(1);
+            RadioGroup modes = (RadioGroup) rootView.findViewById(R.id.modes);
 
-            mode.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    MainActivity.modeId = progress;
+            modes.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                public void onCheckedChanged(RadioGroup modes, int checkedId) {
+                    RadioButton checkedRadioButton = (RadioButton) modes.findViewById(checkedId);
+                    boolean isChecked = checkedRadioButton.isChecked();
                     try {
-                        ((MainActivity) getActivity()).mService.send(Message.obtain(null, MainActivity.modeId));
+                        if (checkedRadioButton.getText().equals("Hardcore")) {
+                            MainActivity.modeId = 0;
+                            ((MainActivity) getActivity()).mService.send(Message.obtain(null, MainActivity.modeId));
+                        } else if (checkedRadioButton.getText().equals("Working")) {
+                            MainActivity.modeId = 1;
+                            ((MainActivity) getActivity()).mService.send(Message.obtain(null, MainActivity.modeId));
+                        } else if (checkedRadioButton.getText().equals("Lazy")) {
+                            MainActivity.modeId = 2;
+                            ((MainActivity) getActivity()).mService.send(Message.obtain(null, MainActivity.modeId));
+                        }
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
-                    Log.d(TAG, Integer.toString(progress));
                 }
             });
 

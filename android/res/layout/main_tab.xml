@@ -3,15 +3,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <Switch
-        android:id="@+id/switch1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="44dp"
-        android:text="Work" />
-
     <TextView
         android:id="@+id/status"
         android:layout_width="match_parent"
@@ -19,6 +10,15 @@
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:gravity="center"
-        android:text="Status: SITTING" />
+        android:text="Status: Off" />
+
+    <Switch
+        android:id="@+id/switch1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:scaleX="3"
+        android:scaleY="3" />
 
 </RelativeLayout>

@@ -3,24 +3,79 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <CheckBox
-        android:id="@+id/checkBox1"
+    <Switch
+        android:id="@+id/switch1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:layout_marginLeft="24dp"
-        android:layout_marginTop="18dp"
-        android:text="Remind Me" />
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="24dp"
+        android:text="Timer" />
 
-    <Spinner
-        android:id="@+id/spinner1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/checkBox1"
-        android:layout_below="@+id/checkBox1"
-        android:layout_marginTop="45dp"
-        android:entries="@array/timer_array"
-        android:visibility="gone" />
+    <RelativeLayout
+        android:id="@+id/seekstuff"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:visibility="gone" >
+
+        <TextView
+            android:id="@+id/timertext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="108dp"
+            android:layout_marginBottom="48dp"
+            android:text="15"
+            android:textSize="144sp" />
+
+        <SeekBar
+            android:id="@+id/seekBar1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/timertext"
+            android:layout_marginBottom="48dp"
+            android:progress="15" />
+
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/seekBar1"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="14dp"
+            android:gravity="center_horizontal"
+            android:text="0"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/seekBar1"
+            android:layout_marginRight="15dp"
+            android:gravity="center_horizontal"
+            android:text="90"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/seekBar1"
+            android:layout_centerHorizontal="true"
+            android:gravity="center_horizontal"
+            android:text="minutes"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    </RelativeLayout>
 
 </RelativeLayout>
